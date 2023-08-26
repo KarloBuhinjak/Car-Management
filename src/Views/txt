@@ -1,0 +1,42 @@
+<body>
+  <h1>Add post</h1>
+  <form action="/api/v1/auth/logout" method="GET">
+    <button type="submit">Odjava</button>
+  </form>
+
+  <form action="/api/v1/post/addPost" method="POST">
+    <label for="title">Title:</label>
+    <input type="text" name="title" /><br />
+    <label for="post">Post:</label>
+    <input type="text" name="post" /><br />
+    <button type="submit">Submit</button>
+  </form>
+  <h2>Post list</h2>
+  <% posts.forEach((post) => { %>
+  <div>
+    <h3><%= post.title %></h3>
+
+    <h4><%= post.post %></h4>
+    <h5><%= user %></h5>
+    <button class="btn-delete" data-id="<%= post.title %>">Izbriši</button>
+  </div>
+  <% }); %>
+</body>
+
+<script>
+  document.querySelectorAll(".btn-delete").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const elementId = event.target.getAttribute("data-id");
+
+      fetch(`/api/v1/post/delete/${elementId}`, { method: "DELETE" })
+        .then((response) => {
+          // Obrada odgovora
+        })
+        .catch((error) => {
+          console.error("Greška prilikom brisanja elementa:", error);
+        });
+    });
+  });
+</script>
+
+

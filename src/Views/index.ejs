@@ -1,0 +1,171 @@
+<!-- ---------------------- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/logo.png" />
+
+    <script
+      src="https://cdn.ethers.io/lib/ethers-5.7.1.umd.min.js"
+      type="application/javascript"
+    ></script>
+    <link href="/styles.css" rel="stylesheet" type="text/css" />
+    <link href="/styles.css" rel="stylesheet" type="text/css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+    />
+
+    <title>Car Menagment</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="container">
+        <a href="/api/v1/post/postList">
+          <h1>Car Menagment</h1>
+        </a>
+
+        <nav>
+          <div>
+            <form action="/api/v1/auth/logout" method="GET">
+              <span><%= user.email %></span>
+              <button type="submit">Log out</button>
+            </form>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <div class="pages">
+      <div class="home">
+        <div class="workouts">
+          <form
+            class="search-form"
+            action="/api/v1/post/postSearch"
+            method="POST"
+          >
+            <input type="text" placeholder="Search by VIN" name="search" />
+            <button type="submit"><i class="fa fa-search"></i></button>
+          </form>
+          <% if (cars.length !== 0) { %> <% for (let i = cars.length - 1; i >=0;
+          i--) { %>
+          <div class="workout-details">
+            <h4><%= cars[i].vin %></h4>
+            <p><strong>Name: </strong><%= cars[i].name %></p>
+            <p><strong>Brand: </strong><%= cars[i].brand %></p>
+            <p><strong>Motor: </strong><%= cars[i].motor %></p>
+            <p><strong>Mileage: </strong><%= cars[i].mileage %></p>
+            <p><strong>Owner: </strong><%= cars[i].owner %></p>
+            <p><strong>Year of production: </strong><%= cars[i].yop %></p>
+            <p><strong>Reviewed By: </strong><%= cars[i].reviewedBy %></p>
+            <p>
+              <strong>Review date: </strong>
+              <%= new Date(cars[i].createdAt * 1000).toLocaleString() %>
+            </p>
+          </div>
+          <% } %> <% } else { %>
+          <h2>No result for your search: <%=searchParameter%></h2>
+          <% } %>
+        </div>
+        <% if (user.isAdmin === true) { %>
+        <form class="create" id="carForm">
+          <h3>Add a New Car Record</h3>
+          <label>Vehicle identification number(VIN):</label>
+          <input type="text" name="vin" /><br />
+          <label>Name:</label>
+          <input type="text" name="name" /><br />
+          <label>Brand:</label>
+          <input type="text" name="brand" /><br />
+          <label>Motor:</label>
+          <input type="text" name="motor" /><br />
+          <label>Mileage:</label>
+          <input type="text" name="mileage" /><br />
+          <label>Owner:</label>
+          <input type="text" name="owner" /><br />
+          <label>Year of production: </label>
+          <input type="text" name="yop" /><br />
+          <div class="loading-spinner" id="loadingSpinner"></div>
+
+          <button type="submit" id="submitButton">Submit</button>
+        </form>
+        <% } %>
+      </div>
+    </div>
+    <script src="/abi.js" type="application/javascript"></script>
+    <script>
+      const carForm = document.getElementById("carForm");
+      const loadingSpinner = document.getElementById("loadingSpinner");
+      const submitButton = document.getElementById("submitButton");
+
+      function showLoadingSpinner() {
+        loadingSpinner.style.display = "block";
+      }
+
+      function hideLoadingSpinner() {
+        loadingSpinner.style.display = "none";
+      }
+
+      carForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showLoadingSpinner();
+
+        // Show the loading indicator
+        submitButton.disabled = true;
+
+        // Access the form data
+        const carForm = document.getElementById("carForm");
+        const formData = new FormData(carForm);
+
+        // Retrieve the input values
+        const vin = formData.get("vin");
+        const name = formData.get("name");
+        const brand = formData.get("brand");
+        const motor = formData.get("motor");
+        const mileage = formData.get("mileage");
+        const owner = formData.get("owner");
+        const yop = formData.get("yop");
+        const contract_address = "<%= process.env.CONTRACT_ADDRESS%>";
+        const reviewedBy = "<%=user.email%>";
+
+        try {
+          console.log("here");
+          await ethereum.request({ method: "eth_requestAccounts" });
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = provider.getSigner();
+
+          const contractInstance = new ethers.Contract(
+            contract_address,
+            abi,
+            signer
+          );
+
+          const transaction = await contractInstance.addCar(
+            vin,
+            name,
+            brand,
+            motor,
+            mileage,
+            owner,
+            yop,
+            reviewedBy
+          );
+
+          await transaction.wait();
+
+          carForm.reset();
+        } catch (Error) {
+          console.log(Error);
+        } finally {
+          // Hide the loading indicator
+          hideLoadingSpinner();
+          submitButton.disabled = false;
+          window.location.reload();
+        }
+      });
+    </script>
+  </body>
+</html>
